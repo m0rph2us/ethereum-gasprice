@@ -22,16 +22,26 @@ data class GasPrice(
 )
 
 data class GasPriceSummary(
-        val blockNumberLatest: Int,
+        val blockNumberLatest: Int?,
         val transactionSize: Int,
         val gasPriceAvg: BigDecimal,
         val gasPriceMax: BigDecimal,
         val gasPriceMin: BigDecimal,
         val gasPrices: List<GasPrice>
-)
+) {
 
-@Service
-class RpcClient {
+    companion object {
+        fun from(ethBlock: EthBlock): GasPriceSummary {
+            return GasPriceSummary(
+                    ethBlock.number?.toInt2(),
+                    ethBlock.transactions.size,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    listOf()
+            )
+        }
+    }
 
 }
 

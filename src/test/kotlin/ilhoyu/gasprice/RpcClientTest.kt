@@ -11,11 +11,19 @@ import org.springframework.test.context.junit4.SpringRunner
 class RpcClientTest {
 
     @Autowired
-    lateinit var ethereumService: InfuraEthereumService
+    lateinit var ethService: InfuraEthService
 
     @Test
     fun `테스트`() {
-        val x = ethereumService.getBlockByNumber("latest", true)
+        val ethBlock = ethService.getLatestBlockWithTransDetails()
+
+
+        val gasPriceSummary = GasPriceSummary.from(ethBlock)
+    }
+
+    @Test
+    fun `변환 테스트`() {
+        assert(0 == "0x".replace("0x", "").toInt(16))
     }
 
 }

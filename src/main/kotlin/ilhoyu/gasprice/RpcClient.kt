@@ -8,6 +8,43 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Configuration
 import org.springframework.stereotype.Service
 
+
+/*
+{
+			"blockHash": "0xf315f5a74de77d1d0db2dcae6143e7e88e9095a38c86f0c0864cd00aec06d827",
+			"blockNumber": "0x806e51",
+			"from": "0x9ab6f0a7483218b99204336a50ec4170a120eca7",
+			"gas": "0x5208",
+			"gasPrice": "0xc5a9f5900",
+			"hash": "0x449f2c02922b4b6b38d6d1f26595237bb200a4c975c494bf391e473e1f8fc24b",
+			"input": "0x",
+			"nonce": "0x4f1b",
+			"r": "0xf1b5719c0d32f18d9fadf700a1077c101ab8ffe7557cb636476747300c43011d",
+			"s": "0x7f32cde9e8b4d8352b7bdf0d421ff257afba3b0adc3d25656c025c004098afc1",
+			"to": "0xc4c9bceecf6914f94ffb34e002d3c8d12bc867da",
+			"transactionIndex": "0x0",
+			"v": "0x25",
+			"value": "0x4180cefe0bd80000"
+		}
+ */
+
+data class EthTransaction(
+    val blockHash: String = "",
+    val blockNumber: String = "",
+    val from: String = "",
+    val gas: String = "",
+    val gasPrice: String = "",
+    val hash: String = "",
+    val input: String = "",
+    val nonce: String = "",
+    val r: String = "",
+    val s: String = "",
+    val to: String = "",
+    val transactionIndex: String = "",
+    val v: String = "",
+    val value: String = ""
+)
+
 /*
 BLOCK - A block object, or null when no block was found
 number: the block number. Null when the returned block is the pending block.
@@ -31,7 +68,21 @@ transactions: Array - Array of transaction objects, or 32 Bytes transaction hash
 uncles: an Array of uncle hashes.
  */
 
-data class EthereumBlock(
+fun String.toComputableHex(): String {
+    return this.replaceFirst("0x", "")
+}
+
+typealias HexString = String
+
+fun HexString.toInt2(): Int {
+    return this.toComputableHex().toInt(16)
+}
+
+fun HexString.toIntOrNull2(): Int? {
+    return this.toComputableHex().toIntOrNull(16)
+}
+
+data class EthBlock(
         val number: String? = null,
         val hash: String = "",
         val parentHash: String = "",
@@ -50,31 +101,31 @@ data class EthereumBlock(
         val gasLimit: String = "",
         val gasUsed: String = "",
         val timestamp: String = "",
-        val transactions: List<Any> = listOf(),
-        val uncles: List<Any> = listOf()
+        val transactions: List<EthTransaction> = listOf(),
+        val uncles: List<String> = listOf()
 )
 
 
-interface InfuraEthereumRpcClient {
-    fun eth_getBlockByNumber(blockParam: String, showTransDetails: Boolean): EthereumBlock
+interface InfuraEthRpcClient {
+    fun eth_getBlockByNumber(blockParam: String, showTransDetails: Boolean): EthBlock
 }
 
 @Service
-class InfuraEthereumService @Autowired constructor(
-        private val rpcClient: InfuraEthereumRpcClient
+class InfuraEthService @Autowired constructor(
+        private val rpcClient: InfuraEthRpcClient
 ) {
-    fun getBlockByNumber(blockParam: String, showTransDetails: Boolean): EthereumBlock {
-        return rpcClient.eth_getBlockByNumber(blockParam, showTransDetails)
+    fun getLatestBlockWithTransDetails(): EthBlock {
+        return rpcClient.eth_getBlockByNumber("latest", true)
     }
 }
 
 @Configuration
 class RpcClientConfig {
     @Bean
-    fun infuraEthereumRpcClient(): InfuraEthereumRpcClient {
+    fun infuraEthRpcClient(): InfuraEthRpcClient {
         return ProxyUtil.createClientProxy(
                 javaClass.classLoader,
-                InfuraEthereumRpcClient::class.java,
+                InfuraEthRpcClient::class.java,
                 JsonRpcHttpClient(
                         URL("https://mainnet.infura.io/v3/2e5a50f41e4844518710c6c10e4a9bb8"),
                         hashMapOf()
