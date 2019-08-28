@@ -4,9 +4,7 @@ import com.googlecode.jsonrpc4j.ProxyUtil
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient
 import org.springframework.context.annotation.Bean
 import java.net.URL
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Configuration
-import org.springframework.stereotype.Service
 
 
 /*
@@ -68,19 +66,6 @@ transactions: Array - Array of transaction objects, or 32 Bytes transaction hash
 uncles: an Array of uncle hashes.
  */
 
-fun String.toComputableHex(): String {
-    return this.replaceFirst("0x", "")
-}
-
-typealias HexString = String
-
-fun HexString.toInt2(): Int {
-    return this.toComputableHex().toInt(16)
-}
-
-fun HexString.toIntOrNull2(): Int? {
-    return this.toComputableHex().toIntOrNull(16)
-}
 
 data class EthBlock(
         val number: String? = null,
@@ -108,15 +93,6 @@ data class EthBlock(
 
 interface InfuraEthRpcClient {
     fun eth_getBlockByNumber(blockParam: String, showTransDetails: Boolean): EthBlock
-}
-
-@Service
-class InfuraEthService @Autowired constructor(
-        private val rpcClient: InfuraEthRpcClient
-) {
-    fun getLatestBlockWithTransDetails(): EthBlock {
-        return rpcClient.eth_getBlockByNumber("latest", true)
-    }
 }
 
 @Configuration

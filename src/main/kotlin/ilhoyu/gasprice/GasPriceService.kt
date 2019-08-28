@@ -1,8 +1,9 @@
 package ilhoyu.gasprice
 
-import org.springframework.stereotype.Component
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 /**
  * • 최신 블록의 Block Number (10 진수로)
@@ -22,7 +23,7 @@ data class GasPrice(
 )
 
 data class GasPriceSummary(
-        val blockNumberLatest: Int?,
+        val blockNumberLatest: Long?,
         val transactionSize: Int,
         val gasPriceAvg: BigDecimal,
         val gasPriceMax: BigDecimal,
@@ -32,23 +33,68 @@ data class GasPriceSummary(
 
     companion object {
         fun from(ethBlock: EthBlock): GasPriceSummary {
+            val gasPrices = ethBlock.transactions.map {
+                Pair(EthUnit.fromWei(it.gasPrice.toBigDecimal2()).toGwei().round(2), 1)
+            }.groupingBy(Pair<BigDecimal, Int>::first).aggregate { _, acc: Int?, ele, _ ->
+                (acc ?: 0) + ele.second
+            }.map {
+                GasPrice(it.key, it.value)
+            }.toList()
+
+            val gasPriceAvg = EthUnit.fromWei(
+                    ethBlock.transactions.fold(BigDecimal.ZERO) { acc, e -> acc + e.gasPrice.toBigDecimal2() }
+            ).toGwei().let {
+                it.divide(ethBlock.transactions.size.toBigDecimal(),2, RoundingMode.HALF_EVEN)
+            }
+
+            val gasPriceMax = gasPrices.maxBy { it.gasPrice }!!.gasPrice
+
+            val gasPriceMin = gasPrices.minBy { it.gasPrice }!!.gasPrice
+
             return GasPriceSummary(
-                    ethBlock.number?.toInt2(),
+                    ethBlock.number?.toLong2(),
                     ethBlock.transactions.size,
-                    BigDecimal.ZERO,
-                    BigDecimal.ZERO,
-                    BigDecimal.ZERO,
-                    listOf()
+                    gasPriceAvg,
+                    gasPriceMax,
+                    gasPriceMin,
+                    gasPrices
             )
         }
     }
 
 }
 
+class EthUnit(private val eth: BigDecimal) {
+
+    companion object {
+        fun fromWei(value: BigDecimal): EthUnit {
+            return EthUnit(
+                    value.divide(Math.pow(10.0, 18.0).toBigDecimal())
+            )
+        }
+    }
+
+    fun toGwei(): BigDecimal {
+        return eth.multiply(Math.pow(10.0, 9.0).toBigDecimal())
+    }
+
+}
+
+fun BigDecimal.round(at: Int): BigDecimal {
+    return this.setScale(at, RoundingMode.HALF_EVEN)
+}
+
+interface EthService {
+    fun getLatestBlockGasPriceSummary(): GasPriceSummary?
+}
+
 @Service
-class GasPriceService {
-    fun gasPrice(): GasPriceSummary {
-        return GasPriceSummary(0, 0, BigDecimal.ZERO,
-                BigDecimal.ZERO, BigDecimal.ZERO, listOf())
+class EthServiceImpl @Autowired constructor(
+        private val rpcClient: InfuraEthRpcClient
+) : EthService {
+    override fun getLatestBlockGasPriceSummary(): GasPriceSummary? {
+        val ethBlock = rpcClient.eth_getBlockByNumber("latest", true)
+
+        return GasPriceSummary.from(ethBlock)
     }
 }
