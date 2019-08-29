@@ -7,8 +7,8 @@ data class Response(
 ) {
 
     enum class Code(val value: Int, val message: String) {
-        SUCCESS(0, "SUCCESS"),
-        ERROR(1, "ERROR")
+        SUCCESS(0, "Success."),
+        ERROR(1, "Internal service error.")
     }
 
     companion object {
@@ -18,7 +18,7 @@ data class Response(
         }
 
         fun error(message: String? = null): Response {
-            return Response(Code.SUCCESS.value, message ?: Code.ERROR.message, null)
+            return Response(Code.ERROR.value, message ?: Code.ERROR.message, null)
         }
 
     }
