@@ -8,10 +8,10 @@ import org.springframework.test.context.junit4.SpringRunner
 
 @RunWith(SpringRunner::class)
 @SpringBootTest
-class RpcClientTest {
+class InfuraRpcClientTest {
 
     @Autowired
-    lateinit var rpcClient: InfuraEthRpcClient
+    lateinit var rpcClient: InfuraRpcClient
 
     @Test
     fun `test`() {

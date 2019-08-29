@@ -9,11 +9,13 @@ import org.springframework.test.context.junit4.SpringRunner
 @RunWith(SpringRunner::class)
 @SpringBootTest
 class GasPriceServiceTest {
+
     @Autowired
-    lateinit var ethService: EthService
+    lateinit var gasPriceService: GasPriceService
 
     @Test
     fun `테스트`() {
-        val gasPriceSummary = ethService.getLatestBlockGasPriceSummary()
+        val gasPriceSummary = gasPriceService.getLatestBlockGasPriceSummary()
     }
+
 }

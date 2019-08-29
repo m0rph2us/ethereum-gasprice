@@ -10,23 +10,23 @@ import org.springframework.context.annotation.Configuration
  * TRANSACTION - A transaction object, or null when no transaction was found
  */
 data class EthTransaction(
-    val blockHash: String = "",             // 32 Bytes - hash of the block where this transaction was in.
+        val blockHash: String = "",         // 32 Bytes - hash of the block where this transaction was in.
                                             // null when its pending.
-    val blockNumber: String = "",           // block number where this transaction was in. null when its pending.
-    val from: String = "",                  // 20 Bytes - address of the sender.
-    val gas: String = "",                   // gas provided by the sender.
-    val gasPrice: String = "",              // gas price provided by the sender in Wei.
-    val hash: String = "",                  // 32 Bytes - hash of the transaction.
-    val input: String = "",                 // the data send along with the transaction.
-    val nonce: String = "",                 // the number of transactions made by the sender prior to this one.
-    val r: String = "",
-    val s: String = "",
-    val to: String = "",                    // 20 Bytes - address of the receiver.
+        val blockNumber: String = "",       // block number where this transaction was in. null when its pending.
+        val from: String = "",              // 20 Bytes - address of the sender.
+        val gas: String = "",               // gas provided by the sender.
+        val gasPrice: String = "",          // gas price provided by the sender in Wei.
+        val hash: String = "",              // 32 Bytes - hash of the transaction.
+        val input: String = "",             // the data send along with the transaction.
+        val nonce: String = "",             // the number of transactions made by the sender prior to this one.
+        val r: String = "",
+        val s: String = "",
+        val to: String = "",                // 20 Bytes - address of the receiver.
                                             // null when its a contract creation transaction.
-    val transactionIndex: String = "",      // integer of the transactions index position in the block.
+        val transactionIndex: String = "",  // integer of the transactions index position in the block.
                                             // null when its pending.
-    val v: String = "",
-    val value: String = ""
+        val v: String = "",
+        val value: String = ""
 )
 
 /**
@@ -60,21 +60,22 @@ data class EthBlock(
         val uncles: List<String> = listOf() // an Array of uncle hashes.
 )
 
-interface InfuraEthRpcClient {
+interface InfuraRpcClient {
     fun eth_getBlockByNumber(blockParam: String, showTransDetails: Boolean): EthBlock
 }
 
 @Configuration
-class RpcClientConfig {
+class InfuraRpcClientConfig constructor(
+        val endpoint: String = "https://mainnet.infura.io/v3/2e5a50f41e4844518710c6c10e4a9bb8"
+) {
+
     @Bean
-    fun infuraEthRpcClient(): InfuraEthRpcClient {
+    fun infuraRpcClient(): InfuraRpcClient {
         return ProxyUtil.createClientProxy(
                 javaClass.classLoader,
-                InfuraEthRpcClient::class.java,
-                JsonRpcHttpClient(
-                        URL("https://mainnet.infura.io/v3/2e5a50f41e4844518710c6c10e4a9bb8"),
-                        hashMapOf()
-                )
+                InfuraRpcClient::class.java,
+                JsonRpcHttpClient(URL(endpoint), hashMapOf())
         )
     }
+
 }

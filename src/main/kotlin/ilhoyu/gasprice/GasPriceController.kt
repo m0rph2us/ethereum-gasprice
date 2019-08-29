@@ -8,12 +8,13 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/")
 class GasPriceController @Autowired constructor(
-        val ethService: EthService
+        val ethereumService: GasPriceService
 ) {
 
-    @RequestMapping(value = "gasprice", method = [RequestMethod.GET], produces = ["application/json"])
-    fun gasPrice(): String {
-        return ethService.getLatestBlockGasPriceSummary().toString()
+    @RequestMapping(value = ["gasprice"], method = [RequestMethod.GET], produces = ["application/json"])
+    fun gasPrice(): Response {
+        val result = ethereumService.getLatestBlockGasPriceSummary()
+        return Response.success(result)
     }
 
 }

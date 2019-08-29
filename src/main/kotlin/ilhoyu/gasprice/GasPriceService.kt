@@ -23,10 +23,13 @@ data class GasPriceSummary(
                                         // * 이런식으로 gas price 로 그룹핑해서 가격순으로 정렬하고 같은 해당 가격의 트랜잭션 수를 넣습니다.
 ) {
 
+    enum class GasPriceSortedBy { ASC, DESC }
+
     companion object {
+
         fun mathContext() = MathContext(1, RoundingMode.HALF_EVEN)
 
-        fun gasPricesFrom(transactions: List<EthTransaction>): List<GasPrice> {
+        fun gasPricesFrom(transactions: List<EthTransaction>, sortOrder: GasPriceSortedBy): List<GasPrice> {
             val mc = mathContext()
             return transactions.map { tran ->
                 tran.gasPrice.hexToBigDecimal().let { value ->
@@ -38,7 +41,12 @@ data class GasPriceSummary(
                 (acc ?: 0) + ele.second
             }.map {
                 GasPrice(it.key, it.value)
-            }.toList()
+            }.toList().let { gasPrices ->
+                when (sortOrder) {
+                    GasPriceSortedBy.ASC -> gasPrices.sortedBy { it.gasPrice }
+                    GasPriceSortedBy.DESC -> gasPrices.sortedByDescending { it.gasPrice }
+                }
+            }
         }
 
         fun gasPriceAvgFrom(transactions: List<EthTransaction>): BigDecimal {
@@ -56,8 +64,8 @@ data class GasPriceSummary(
 
         fun gasPriceMaxFrom(gasPrices: List<GasPrice>) = gasPrices.maxBy { it.gasPrice }!!.gasPrice
 
-        fun from(ethBlock: EthBlock): GasPriceSummary {
-            return gasPricesFrom(ethBlock.transactions).let { gasPrices ->
+        fun from(ethBlock: EthBlock, sortOrder: GasPriceSortedBy): GasPriceSummary {
+            return gasPricesFrom(ethBlock.transactions, sortOrder).let { gasPrices ->
                 GasPriceSummary(
                         ethBlock.number?.hexToLong(),
                         ethBlock.transactions.size,
@@ -68,24 +76,25 @@ data class GasPriceSummary(
                 )
             }
         }
+
     }
 
 }
 
-interface EthService {
+interface GasPriceService {
     fun getLatestBlockGasPriceSummary(): GasPriceSummary?
 }
 
 @Service
-class EthServiceImpl @Autowired constructor(
-        private val rpcClient: InfuraEthRpcClient
-) : EthService {
+class GasPriceServiceImpl @Autowired constructor(
+        private val rpcClient: InfuraRpcClient
+) : GasPriceService {
 
     override fun getLatestBlockGasPriceSummary(): GasPriceSummary? {
         return rpcClient.eth_getBlockByNumber(
                 "latest", true
         ).let { ethBlock ->
-            GasPriceSummary.from(ethBlock)
+            GasPriceSummary.from(ethBlock, GasPriceSummary.GasPriceSortedBy.ASC)
         }
     }
 

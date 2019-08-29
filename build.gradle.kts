@@ -27,6 +27,7 @@ dependencies {
 	implementation("com.github.briandilley.jsonrpc4j:jsonrpc4j:1.5.3")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
+	testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0")
 }
 
 tasks.withType<KotlinCompile> {
