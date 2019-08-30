@@ -1,6 +1,6 @@
 package ilhoyu.gasprice
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.googlecode.jsonrpc4j.JsonRpcClientException
 import com.nhaarman.mockitokotlin2.whenever
 import org.hamcrest.Matchers
 import org.junit.Before
@@ -16,7 +16,8 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
 import java.math.BigDecimal
@@ -94,6 +95,27 @@ class GasPriceControllerTest {
             andExpect(
                     ResultMatcher.matchAll(
                             jsonPath("$.code", Matchers.`is`(Response.Code.ERROR.value)),
+                            jsonPath("$.message", Matchers.`is`(Response.Code.ERROR.message)),
+                            jsonPath("$.data", Matchers.isEmptyOrNullString())
+                    )
+            )
+        }
+    }
+
+    @Test
+    fun `RPC 호출 예외가 발생했을 경우 내부 서비스 오류에 대한 JSON 데이터가 반환되어야 하며 반환 오류 코드가 RPC 오류관련 코드여야 한다`() {
+        whenever(
+                gasPriceService.getLatestBlockGasPriceSummary()
+        ).then {
+            throw JsonRpcClientException(1, "test", null)
+        }
+
+        mockMvc!!.perform(gasPriceRequest()).run {
+            andExpect(status().isInternalServerError)
+
+            andExpect(
+                    ResultMatcher.matchAll(
+                            jsonPath("$.code", Matchers.`is`(Response.Code.ERROR_JSON_RPC_CLIENT.value)),
                             jsonPath("$.message", Matchers.`is`(Response.Code.ERROR.message)),
                             jsonPath("$.data", Matchers.isEmptyOrNullString())
                     )

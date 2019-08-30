@@ -1,10 +1,11 @@
-package ilhoyu.gasprice
+package ilhoyu.gasprice.config
 
-import com.googlecode.jsonrpc4j.ProxyUtil
+import com.googlecode.jsonrpc4j.DefaultExceptionResolver
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient
+import com.googlecode.jsonrpc4j.ProxyUtil
 import org.springframework.context.annotation.Bean
-import java.net.URL
 import org.springframework.context.annotation.Configuration
+import java.net.URL
 
 /**
  * TRANSACTION - A transaction object, or null when no transaction was found
@@ -66,15 +67,28 @@ interface InfuraRpcClient {
 
 @Configuration
 class InfuraRpcClientConfig constructor(
-        val endpoint: String = "https://mainnet.infura.io/v3/2e5a50f41e4844518710c6c10e4a9bb8"
+        val endpointBase: String = "https://mainnet.infura.io/v3/",
+        val projectId: String = "2e5a50f41e4844518710c6c10e4a9bb8",
+        val connectionTimeoutMillis: Int = 3000,
+        val readTimeoutMillis: Int = 3000
 ) {
 
     @Bean
-    fun infuraRpcClient(): InfuraRpcClient {
+    fun jsonRpcHttpClient(): JsonRpcHttpClient {
+        val url = URL(endpointBase + projectId)
+
+        return JsonRpcHttpClient(url, hashMapOf()).also {
+            it.connectionTimeoutMillis = connectionTimeoutMillis
+            it.readTimeoutMillis = readTimeoutMillis
+        }
+    }
+
+    @Bean
+    fun infuraRpcClient(jsonRpcHttpClient: JsonRpcHttpClient): InfuraRpcClient {
         return ProxyUtil.createClientProxy(
                 javaClass.classLoader,
                 InfuraRpcClient::class.java,
-                JsonRpcHttpClient(URL(endpoint), hashMapOf())
+                jsonRpcHttpClient
         )
     }
 

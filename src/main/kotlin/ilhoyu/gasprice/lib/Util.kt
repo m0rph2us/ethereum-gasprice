@@ -1,4 +1,4 @@
-package ilhoyu.gasprice
+package ilhoyu.gasprice.lib
 
 import java.math.BigDecimal
 
